@@ -12,6 +12,7 @@ from collections import OrderedDict
 
 __all__ = ['RLSearcher', 'LSTMController']
 
+
 class RLSearcher(BaseSearcher):
     """Reinforcement Learning Searcher for ConfigSpace
 
@@ -31,6 +32,7 @@ class RLSearcher(BaseSearcher):
     >>> searcher = RLSearcher(train_fn.kwspaces)
     >>> searcher.get_config()
     """
+
     def __init__(self, kwspaces, ctx=mx.cpu(), controller_type='lstm', **kwargs):
         self._results = OrderedDict()
         self._best_state_path = None
@@ -47,11 +49,11 @@ class RLSearcher(BaseSearcher):
             self.controller._prefetch()
 
     def __repr__(self):
-        reprstr = self.__class__.__name__ + '(' +  \
-            'Number of Trials: {}.'.format(len(self._results)) + \
-            'Best Config: {}'.format(self.get_best_config()) + \
-            'Best Reward: {}'.format(self.get_best_reward()) + \
-            ')'
+        reprstr = self.__class__.__name__ + '(' + \
+                  'Number of Trials: {}.'.format(len(self._results)) + \
+                  'Best Config: {}'.format(self.get_best_config()) + \
+                  'Best Reward: {}'.format(self.get_best_reward()) + \
+                  ')'
         return reprstr
 
     def get_config(self, **kwargs):
@@ -69,15 +71,15 @@ class RLSearcher(BaseSearcher):
         return destination
 
     def load_state_dict(self, state_dict):
-        self._results=pickle.loads(state_dict['results'])
+        self._results = pickle.loads(state_dict['results'])
         update_params(self.controller, pickle.loads(state_dict['controller_params']))
 
 
 class BaseController(mx.gluon.Block):
     def __init__(self, prefetch=4, num_workers=4, timeout=20):
         super().__init__()
-        #manager = multiprocessing.Manager()
-        self._data_buffer = {}#manager.dict()
+        # manager = multiprocessing.Manager()
+        self._data_buffer = {}  # manager.dict()
         self._rcvd_idx = 0
         self._sent_idx = 0
         self._num_workers = num_workers
@@ -105,7 +107,7 @@ class BaseController(mx.gluon.Block):
         try:
             ret = self._data_buffer.pop(self._rcvd_idx)
             self._rcvd_idx += 1
-            return  ret.get(timeout=self._timeout)
+            return ret.get(timeout=self._timeout)
         except multiprocessing.context.TimeoutError:
             msg = '''Worker timed out after {} seconds. This might be caused by \n
             - Slow transform. Please increase timeout to allow slower data loading in each worker.
@@ -115,6 +117,7 @@ class BaseController(mx.gluon.Block):
         except Exception:
             self._worker_pool.terminate()
             raise
+
 
 # Reference: https://github.com/carpedm20/ENAS-pytorch/
 class LSTMController(BaseController):
@@ -147,7 +150,7 @@ class LSTMController(BaseController):
 
         def _get_default_hidden(key):
             return mx.nd.zeros((key, hidden_size), ctx=self.context)
-        
+
         self.static_init_hidden = keydefaultdict(_init_hidden)
         self.static_inputs = keydefaultdict(_get_default_hidden)
 
@@ -169,7 +172,7 @@ class LSTMController(BaseController):
         actions = []
         for block_idx in range(len(self.num_tokens)):
             logits, hidden = self.forward(inputs, hidden,
-                                          block_idx, is_embed=(block_idx==0))
+                                          block_idx, is_embed=(block_idx == 0))
             probs = F.softmax(logits, axis=-1)
             action = mx.nd.argmax(probs, 1)
             actions.append(action)
@@ -200,7 +203,7 @@ class LSTMController(BaseController):
 
         for idx in range(len(self.num_tokens)):
             logits, hidden = self.forward(inputs, hidden,
-                                          idx, is_embed=(idx==0))
+                                          idx, is_embed=(idx == 0))
 
             probs = F.softmax(logits, axis=-1)
             log_prob = F.log_softmax(logits, axis=-1)
@@ -233,6 +236,7 @@ class LSTMController(BaseController):
         else:
             return configs
 
+
 class Alpha(mx.gluon.Block):
     def __init__(self, shape):
         super().__init__()
@@ -240,6 +244,7 @@ class Alpha(mx.gluon.Block):
 
     def forward(self, batch_size):
         return self.weight.data().expand_dims(0).repeat(batch_size, axis=0)
+
 
 class AttenController(BaseController):
     def __init__(self, kwspaces, softmax_temperature=1.0, hidden_size=100,
@@ -264,19 +269,19 @@ class AttenController(BaseController):
 
     def inference(self):
         # self-attention
-        x = self.embedding(1).reshape(-3, 0)#.squeeze() # b x action x h
+        x = self.embedding(1).reshape(-3, 0)  # .squeeze() # b x action x h
         kshape = (1, self.num_total_tokens, self.hidden_size)
         vshape = (1, self.num_total_tokens, 1)
-        querry = self.querry(x).reshape(*kshape) # b x actions x h
-        key = self.key(x).reshape(*kshape) #b x actions x h
-        value = self.value(x).reshape(*vshape) # b x actions x 1
+        querry = self.querry(x).reshape(*kshape)  # b x actions x h
+        key = self.key(x).reshape(*kshape)  # b x actions x h
+        value = self.value(x).reshape(*vshape)  # b x actions x 1
         atten = mx.nd.linalg_gemm2(querry, key, transpose_b=True).softmax(axis=1)
         alphas = mx.nd.linalg_gemm2(atten, value).squeeze(axis=-1)
 
         actions = []
         for idx in range(len(self.num_tokens)):
             i0 = sum(self.num_tokens[:idx])
-            i1 = sum(self.num_tokens[:idx+1])
+            i1 = sum(self.num_tokens[:idx + 1])
             logits = alphas[:, i0: i1]
             probs = F.softmax(logits, axis=-1)
             action = mx.nd.argmax(probs, 1)
@@ -292,12 +297,12 @@ class AttenController(BaseController):
 
     def sample(self, batch_size=1, with_details=False, with_entropy=False):
         # self-attention
-        x = self.embedding(batch_size).reshape(-3, 0)#.squeeze() # b x action x h
+        x = self.embedding(batch_size).reshape(-3, 0)  # .squeeze() # b x action x h
         kshape = (batch_size, self.num_total_tokens, self.hidden_size)
         vshape = (batch_size, self.num_total_tokens, 1)
-        querry = self.querry(x).reshape(*kshape) # b x actions x h
-        key = self.key(x).reshape(*kshape) #b x actions x h
-        value = self.value(x).reshape(*vshape) # b x actions x 1
+        querry = self.querry(x).reshape(*kshape)  # b x actions x h
+        key = self.key(x).reshape(*kshape)  # b x actions x h
+        value = self.value(x).reshape(*vshape)  # b x actions x 1
         atten = mx.nd.linalg_gemm2(querry, key, transpose_b=True).softmax(axis=1)
         alphas = mx.nd.linalg_gemm2(atten, value).squeeze(axis=-1)
 
@@ -306,7 +311,7 @@ class AttenController(BaseController):
         log_probs = []
         for idx in range(len(self.num_tokens)):
             i0 = sum(self.num_tokens[:idx])
-            i1 = sum(self.num_tokens[:idx+1])
+            i1 = sum(self.num_tokens[:idx + 1])
             logits = alphas[:, i0: i1]
 
             probs = F.softmax(logits, axis=-1)
@@ -337,6 +342,7 @@ class AttenController(BaseController):
             return configs, F.stack(*log_probs, axis=1), entropies
         else:
             return configs
+
 
 class AlphaController(BaseController):
     def __init__(self, kwspaces, softmax_temperature=1.0, ctx=mx.cpu(), **kwargs):

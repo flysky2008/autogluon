@@ -4,6 +4,7 @@ from .searcher import BaseSearcher
 from ..core.space import Categorical
 from sklearn.model_selection import ParameterGrid
 
+
 class GridSearcher(BaseSearcher):
     """Grid Searcher that exhaustively tries all possible configurations. 
        This Searcher can only be used for discrete search spaces of type :class:`autogluon.space.Categorical`

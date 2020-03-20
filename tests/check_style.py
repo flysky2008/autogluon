@@ -14,9 +14,9 @@ def main():
     lines = flake8_out.splitlines()
     count = int(lines[-1].decode())
     if count > 0:
-        logging.warn("%d PEP8 warnings remaining", count)
+        logging.warning("%d PEP8 warnings remaining", count)
     if count > 3438:
-        logging.warn("Additional PEP8 warnings were introducing, style check fails")
+        logging.warning("Additional PEP8 warnings were introducing, style check fails")
         return 1
     logging.info("Passed")
     return 0

@@ -15,6 +15,7 @@ import autogluon as ag
 import ConfigSpace as CS
 import ConfigSpace.hyperparameters as CSH
 
+
 # CLI
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a model for image classification.')
@@ -28,7 +29,7 @@ def parse_args():
                         help='scheduler name (default: fifo)')
     parser.add_argument('--checkpoint', type=str, default='checkpoint/cifar1.ag',
                         help='checkpoint path (default: None)')
-    parser.add_argument('--debug', action='store_true', default= False,
+    parser.add_argument('--debug', action='store_true', default=False,
                         help='debug if needed')
     args = parser.parse_args()
     return args
@@ -136,6 +137,7 @@ def train_cifar(args, reporter):
 
     train(args.epochs, context)
 
+
 def cifar_evaluate(net, args):
     batch_size = args.batch_size
     batch_size *= max(1, args.num_gpus)
@@ -158,6 +160,7 @@ def cifar_evaluate(net, args):
         metric.update(label, outputs)
     return metric.get()[1]
 
+
 if __name__ == '__main__':
     args = parse_args()
     if args.debug:
@@ -174,7 +177,7 @@ if __name__ == '__main__':
                                                       num_trials=args.num_trials,
                                                       checkpoint=args.checkpoint,
                                                       time_attr='epoch', reward_attr="accuracy",
-                                                      max_t=args.epochs, grace_period=args.epochs//4,
+                                                      max_t=args.epochs, grace_period=args.epochs // 4,
                                                       dist_ip_addrs=extra_node_ips)
     elif args.scheduler == 'fifo':
         myscheduler = ag.scheduler.FIFOScheduler(train_cifar,

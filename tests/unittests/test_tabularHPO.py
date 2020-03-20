@@ -16,15 +16,15 @@ from test_tabular import run_tabular_benchmarks
 
 def test_tabularHPO():
     ############ Benchmark options you can set: ########################
-    perf_threshold = 1.1 # How much worse can performance on each dataset be vs previous performance without warning
-    seed_val = 99 # random seed
+    perf_threshold = 1.1  # How much worse can performance on each dataset be vs previous performance without warning
+    seed_val = 99  # random seed
     subsample_size = None
     hyperparameter_tune = True
-    verbosity = 2 # how much output to print
+    verbosity = 2  # how much output to print
     hyperparameters = None
     time_limits = None
     num_trials = None
-    fast_benchmark = True # False
+    fast_benchmark = True  # False
     # If True, run a faster benchmark (subsample training sets, less epochs, etc),
     # otherwise we run full benchmark with default AutoGluon settings.
     # performance_value warnings are disabled when fast_benchmark = True.
@@ -32,7 +32,7 @@ def test_tabularHPO():
     #### If fast_benchmark = True, can control model training time here. Only used if fast_benchmark=True ####
     if fast_benchmark:
         subsample_size = 100
-        nn_options = {'num_epochs': 3} 
+        nn_options = {'num_epochs': 3}
         gbm_options = {'num_boost_round': 30}
         hyperparameters = {'GBM': gbm_options, 'NN': nn_options}
         time_limits = 60

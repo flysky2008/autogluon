@@ -4,14 +4,13 @@ import os
 
 root = './'
 filename_zip = ag.download('https://autogluon.s3.amazonaws.com/datasets/tiny_motorbike.zip',
-                        path=root)
+                           path=root)
 filename = ag.unzip(filename_zip, root=root)
-
 
 data_root = os.path.join(root, filename)
 dataset_train = task.Dataset(data_root, classes=('motorbike',))
 
-time_limits = 5*60*60 # 5 hours
+time_limits = 5 * 60 * 60  # 5 hours
 epochs = 30
 detector = task.fit(dataset_train,
                     num_trials=2,

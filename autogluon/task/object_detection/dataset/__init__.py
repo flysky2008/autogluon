@@ -3,7 +3,9 @@ from .voc import *
 from .coco import *
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 def get_dataset(root='~/.mxnet/datasets/voc', index_file_name='trainval', name=None, \
                 classes=None, format='voc', Train=True, **kwargs):
@@ -36,25 +38,24 @@ def get_dataset(root='~/.mxnet/datasets/voc', index_file_name='trainval', name=N
     Dataset object that can be passed to `task.fit()`, which is actually an :class:`autogluon.space.AutoGluonObject`. 
     To interact with such an object yourself, you must first call `Dataset.init()` to instantiate the object in Python.
     """
-    if format=='voc':
+    if format == 'voc':
         logger.info(">>> create dataset(VOC format) ")
 
         # built-in dataset
         if name:
             if Train:
-                if name=='voc':
+                if name == 'voc':
                     splits = [('VOC2007', 'trainval'), ('VOC2012', 'trainval')]
-                elif name=='voc2007':
+                elif name == 'voc2007':
                     splits = [('VOC2007', 'trainval')]
             else:
-                splits= [('VOC2007', 'test')] 
+                splits = [('VOC2007', 'test')]
         else:  # custom dataset
             splits = [('', index_file_name)]
         return CustomVOCDetection(root, splits, name, classes, **kwargs)
 
-    elif format=='coco':
+    elif format == 'coco':
         logger.info(">>> create dataset(COCO format)")
         return COCO(*args, **kwargs)
     else:
         raise NotImplementedError('Other data formats are not implemented.')
-
